@@ -1,0 +1,391 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>The Mathematics of Me</title>
+    <link href="https://fonts.googleapis.com/css2?family=VT323&family=Fredoka:wght@400;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --sky-purple: #3A1C54;
+            --sakura-pink: #F48FB1;
+            --sunset-orange: #FF8A80;
+            --btn-lavender: #B39DDB;
+            --dark-outline: #210936;
+            --cream-bg: #FFFDF9;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Fredoka', sans-serif;
+        }
+
+        body {
+            background: linear-gradient(180deg, var(--dark-outline) 0%, #512DA8 60%, var(--sakura-pink) 100%);
+            color: white;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 20px;
+            overflow: hidden;
+        }
+
+        .rpg-container {
+            background: rgba(33, 9, 54, 0.95);
+            border: 6px solid var(--dark-outline);
+            border-radius: 20px;
+            box-shadow: 0 16px 40px rgba(0, 0, 0, 0.7);
+            width: 100%;
+            max-width: 800px;
+            overflow: hidden;
+        }
+
+        /* RPG Game Viewport Screen */
+        .game-viewport {
+            background: linear-gradient(to bottom, #2c1654 0%, #6a1b9a 35%, #ec407a 65%, #f48fb1 80%, #7cb342 80%, #558b2f 100%);
+            height: 280px;
+            position: relative;
+            overflow: hidden;
+            border-bottom: 6px solid var(--dark-outline);
+        }
+
+        /* Twinkling Stars & Clouds */
+        .star-pixel {
+            position: absolute;
+            background: #FFF;
+            width: 4px;
+            height: 4px;
+            opacity: 0.6;
+            box-shadow: 4px 0 rgba(255,255,255,0.3), 0 4px rgba(255,255,255,0.3);
+        }
+
+        /* --- PRETTY RETRO 16-BIT CHARACTER RENDER (Facing Right) --- */
+        .rpg-runner {
+            position: absolute;
+            bottom: 58px;
+            left: 12%;
+            width: 32px;
+            height: 48px;
+            transition: left 1.2s cubic-bezier(0.25, 0.8, 0.25, 1);
+            z-index: 10;
+        }
+
+        /* Dynamic sprite bounce cycle inspired by classical handheld platformers */
+        .active-run {
+            animation: spriteRunCycle 0.2s infinite steps(2) alternate;
+        }
+
+        @keyframes spriteRunCycle {
+            0% { transform: translateY(0) scaleY(1); }
+            100% { transform: translateY(-4px) scaleY(0.96); }
+        }
+
+        /* Advanced CSS Pixel Drawing Layer:
+           Uses accurate hex palettes with solid dark outlines to mimic the Ghibli/Totoro clean pixel-art edge.
+           Colors: #210936 (Outline), #5c3826 (Brown Hair), #ffd5ae (Skin), #ff5c8d (Jacket), #1565c0 (Skirt), #ffffff (Socks/Shoes)
+        */
+        .pixel-art-character {
+            width: 3px;
+            height: 3px;
+            background: transparent;
+            position: absolute;
+            box-shadow:
+                /* Hair Crest and Cap Details */
+                6px 3px var(--dark-outline), 9px 3px var(--dark-outline), 12px 3px var(--dark-outline),
+                3px 6px var(--dark-outline), 6px 6px #5c3826, 9px 6px #5c3826, 12px 6px #5c3826, 15px 6px var(--dark-outline),
+                3px 9px var(--dark-outline), 6px 9px #5c3826, 9px 9px #ffd5ae, 12px 9px #ffd5ae, 15px 9px #5c3826, 18px 9px var(--dark-outline),
+                /* Eyes & Fine Face Contours facing right */
+                0px 12px var(--dark-outline), 3px 12px #5c3826, 6px 12px #ffd5ae, 9px 12px #ffd5ae, 12px 12px var(--dark-outline), 15px 12px #ffd5ae, 18px 12px var(--dark-outline),
+                0px 15px var(--dark-outline), 3px 15px #5c3826, 6px 15px #ffd5ae, 9px 15px #ffd5ae, 12px 15px #ffd5ae, 15px 15px #ffd5ae, 18px 15px var(--dark-outline),
+                3px 18px var(--dark-outline), 6px 18px #5c3826, 9px 18px #ffd5ae, 12px 18px #ffd5ae, 15px 18px var(--dark-outline),
+                /* Pretty Pink Jacket Body */
+                3px 21px var(--dark-outline), 6px 21px #ff5c8d, 9px 21px #ff5c8d, 12px 21px #ff5c8d, 15px 21px var(--dark-outline),
+                0px 24px var(--dark-outline), 3px 24px #ff5c8d, 6px 24px #ff5c8d, 9px 24px #ff5c8d, 12px 24px #ff5c8d, 14px 24px #ff5c8d, 17px 24px var(--dark-outline),
+                3px 27px var(--dark-outline), 6px 27px #ff5c8d, 9px 27px #ff5c8d, 12px 27px #ff5c8d, 15px 27px var(--dark-outline),
+                /* Pleated Blue Skirt System */
+                0px 30px var(--dark-outline), 3px 30px #1565c0, 6px 30px #1565c0, 9px 30px #1565c0, 12px 30px #1565c0, 15px 30px #1565c0, 18px 30px var(--dark-outline),
+                3px 33px var(--dark-outline), 6px 33px #1565c0, 9px 33px #1565c0, 12px 33px #1565c0, 15px 33px var(--dark-outline),
+                /* Mini Running Legs and Dainty Socks */
+                3px 36px var(--dark-outline), 6px 36px #ffd5ae, 12px 36px var(--dark-outline), 15px 36px #ffd5ae,
+                3px 39px var(--dark-outline), 6px 39px #ffffff, 12px 39px var(--dark-outline), 15px 39px #ffffff,
+                3px 42px var(--dark-outline), 6px 42px var(--dark-outline), 12px 42px var(--dark-outline), 15px 42px var(--dark-outline);
+        }
+
+        /* Checkpoint Station Elements along the grass line */
+        .rpg-station {
+            position: absolute;
+            bottom: 56px;
+            font-size: 1.8rem;
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            opacity: 0.35;
+            filter: drop-shadow(0 3px 0 rgba(0,0,0,0.4));
+        }
+
+        .rpg-station.active-node {
+            opacity: 1;
+            transform: scale(1.25);
+            animation: flagFloat 0.6s infinite alternate;
+        }
+
+        @keyframes flagFloat {
+            from { transform: translateY(0) scale(1.2); }
+            to { transform: translateY(-6px) scale(1.2); }
+        }
+
+        /* Main UI Interaction Dashboard */
+        .dashboard-panel {
+            padding: 30px;
+            background: var(--cream-bg);
+            color: var(--dark-outline);
+        }
+
+        .game-view-layer { display: none; }
+        .game-view-layer.active { display: block; }
+
+        .bubble-window {
+            background: white;
+            border: 4px solid var(--dark-outline);
+            border-radius: 16px;
+            padding: 22px;
+            margin-bottom: 25px;
+            box-shadow: 0 6px 0 var(--dark-outline);
+            text-align: center;
+        }
+
+        .bubble-window h2 {
+            font-family: 'VT323', monospace;
+            font-size: 2.6rem;
+            color: #C2185B;
+        }
+
+        .choices-vertical-layout {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 12px;
+        }
+
+        .interactive-btn {
+            background: white;
+            border: 3px solid var(--dark-outline);
+            border-radius: 16px;
+            padding: 15px 22px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: var(--dark-outline);
+            cursor: pointer;
+            text-align: left;
+            box-shadow: 0 4px 0 var(--dark-outline);
+            transition: all 0.1s ease;
+        }
+
+        .interactive-btn:hover {
+            background-color: #F8BBD0;
+            transform: translateY(2px);
+            box-shadow: 0 2px 0 var(--dark-outline);
+        }
+
+        .interactive-btn:active {
+            transform: translateY(4px);
+            box-shadow: 0 0px 0 var(--dark-outline);
+        }
+
+        .action-system-btn {
+            font-family: 'VT323', monospace;
+            font-size: 2.2rem;
+            border: 4px solid var(--dark-outline);
+            padding: 10px 50px;
+            border-radius: 14px;
+            cursor: pointer;
+            box-shadow: 0 6px 0 var(--dark-outline);
+            margin: 10px;
+            color: white;
+            text-shadow: 0 2px 0 rgba(0,0,0,0.3);
+        }
+
+        #btn-game-trigger { background: var(--sakura-pink); color: var(--dark-outline); }
+        #btn-restart-trigger { background: var(--btn-lavender); }
+
+        .hud-toast-banner {
+            font-family: 'VT323', monospace;
+            font-size: 1.8rem;
+            text-align: center;
+            padding: 8px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            display: none;
+            border: 3px solid var(--dark-outline);
+        }
+        .hud-toast-banner.success { background: #E8F5E9; color: #2E7D32; }
+        .hud-toast-banner.failure { background: #FFEBEE; color: #C62828; }
+
+        .summary-card-block {
+            background: white;
+            border: 3px dashed var(--sakura-pink);
+            border-radius: 16px;
+            padding: 25px;
+            text-align: left;
+            margin-bottom: 25px;
+            color: #4A5568;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="rpg-container">
+        <!-- 16-BIT TOP VIEWPORT PANEL -->
+        <div class="game-viewport">
+            <div class="star-pixel" style="top: 15%; left: 8%;"></div>
+            <div class="star-pixel" style="top: 22%; left: 45%;"></div>
+            <div class="star-pixel" style="top: 12%; left: 82%;"></div>
+            
+            <!-- Stations spread nicely on the road canvas -->
+            <div class="rpg-station" id="station-0" style="left: 28%;">🎓</div>
+            <div class="rpg-station" id="station-1" style="left: 43%;">🧾</div>
+            <div class="rpg-station" id="station-2" style="left: 58%;">✈️</div>
+            <div class="rpg-station" id="station-3" style="left: 73%;">💼</div>
+            <div class="rpg-station" id="station-4" style="left: 88%;">⚖️</div>
+
+            <!-- PRETTY GHIBLI STYLE PIXEL CHARACTER -->
+            <div class="rpg-runner" id="main-avatar-sprite">
+                <div class="pixel-art-character"></div>
+            </div>
+        </div>
+
+        <!-- LOGIC DASHBOARD CONTROLS -->
+        <div class="dashboard-panel">
+            <div id="toast-banner-box" class="hud-toast-banner"></div>
+
+            <!-- CARD VIEW 1: MAIN TITLE WELCOME SCREEN -->
+            <div id="layer-welcome" class="game-view-layer active" style="text-align: center;">
+                <div class="bubble-window">
+                    <h2>THE MATHEMATICS OF ME 🌸</h2>
+                    <br>
+                    <p>"Math is not just in books. It's in me, in my life, and in my dreams."</p>
+                </div>
+                <button class="action-system-btn" id="btn-game-trigger" onclick="switchState('layer-quiz-hub')">START GAME</button>
+            </div>
+
+            <!-- CARD VIEW 2: CORE TIMELINE INTERACTION -->
+            <div id="layer-quiz-hub" class="game-view-layer">
+                <div class="bubble-window">
+                    <strong style="color: #D81B60; font-size: 0.95rem; display: block; margin-bottom: 5px;" id="lbl-objective-counter">OBJECTIVE #1</strong>
+                    <p id="lbl-question-text">Select the primary structural timeline baseline to start running.</p>
+                </div>
+
+                <div class="choices-vertical-layout" id="box-options-node">
+                    <!-- Options load dynamically -->
+                </div>
+            </div>
+
+            <!-- CARD VIEW 3: END SCENE AND SUMMARY REPORT -->
+            <div id="layer-complete-hub" class="game-view-layer" style="text-align: center;">
+                <h1 class="bubble-window" style="font-family: 'VT323', monospace; font-size: 3rem; color: #EC407A;">💖 MISSION COMPLETE 💖</h1>
+                
+                <div class="summary-card-block">
+                    <h3>🌸 About Me</h3>
+                    <p>I enjoy planning my future one step at a time. Setting timelines keeps me focused, reminding me that success isn't built in a flash—it's engineered through steady, meaningful progress.</p>
+                    <br>
+                    <h3>🧠 The Math Connection</h3>
+                    <p>Just like scheduling timelines, time management, and sequencing structures in mathematics help us systematically clear hurdles, I use logic to transform abstract dreams into realistic stations!</p>
+                </div>
+
+                <button class="action-system-btn" id="btn-restart-trigger" onclick="resetWholeSystem()">PLAY AGAIN</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const engineDataChain = [
+            { id: "college", text: "🎓 Graduate from College", coreQuery: "What serves as your core educational baseline?", runStopX: "25%" },
+            { id: "cpa", text: "🧾 Become a CPA", coreQuery: "Which credential secures your finance expertise immediately after graduation?", runStopX: "40%" },
+            { id: "taiwan", text: "✈️ Study Abroad (Taiwan)", coreQuery: "Where are we traveling across the ocean to capture a global outlook?", runStopX: "55%" },
+            { id: "career", text: "💼 Build My Career", coreQuery: "Time to log corporate runtime and accumulate industry experience.", runStopX: "70%" },
+            { id: "law", text: "⚖️ Study Law", coreQuery: "What stands as your absolute final, ultimate long-term terminal milestone?", runStopX: "85%" }
+        ];
+
+        let indexPointer = 0;
+
+        function switchState(screenId) {
+            document.querySelectorAll('.game-view-layer').forEach(view => view.classList.remove('active'));
+            document.getElementById(screenId).classList.add('active');
+            if(screenId === 'layer-quiz-hub') executeRoundLoad();
+        }
+
+        function executeRoundLoad() {
+            document.getElementById('lbl-objective-counter').innerText = `OBJECTIVE #0${indexPointer + 1} / 05`;
+            document.getElementById('lbl-question-text').innerText = engineDataChain[indexPointer].coreQuery;
+
+            const targetBox = document.getElementById('box-options-node');
+            targetBox.innerHTML = '';
+
+            const chaoticMix = [...engineDataChain].sort(() => Math.random() - 0.5);
+
+            chaoticMix.forEach(item => {
+                const btn = document.createElement('button');
+                btn.className = 'interactive-btn';
+                btn.innerText = item.text;
+
+                const trueIndex = engineDataChain.findIndex(element => element.id === item.id);
+                
+                if (trueIndex < indexPointer) {
+                    btn.style.opacity = "0.4";
+                    btn.disabled = true;
+                }
+
+                btn.onclick = () => verifySelection(item.id, trueIndex);
+                targetBox.appendChild(btn);
+            });
+        }
+
+        function verifySelection(id, positionIndex) {
+            const toast = document.getElementById('toast-banner-box');
+            toast.style.display = "block";
+
+            if (positionIndex === indexPointer) {
+                indexPointer++;
+                toast.className = "hud-toast-banner success";
+                toast.innerText = "✨ STAGE CLEAR! RUNNING TO THE NEXT TERMINAL...";
+
+                const runner = document.getElementById('main-avatar-sprite');
+                runner.classList.add('active-run');
+                
+                // Runs beautifully to the right coordinate points
+                runner.style.left = engineDataChain[positionIndex].runStopX;
+                document.getElementById(`station-${positionIndex}`).classList.add('active-node');
+
+                setTimeout(() => {
+                    runner.classList.remove('active-run');
+                    toast.style.display = "none";
+                    
+                    if (indexPointer === engineDataChain.length) {
+                        switchState('layer-complete-hub');
+                    } else {
+                        executeRoundLoad();
+                    }
+                }, 1300);
+
+            } else {
+                toast.className = "hud-toast-banner failure";
+                toast.innerText = "❌ TIMELINE INTERRUPT: CHRONOLOGICAL FAULT DETECTED!";
+                setTimeout(() => { toast.style.display = "none"; }, 1200);
+            }
+        }
+
+        function resetWholeSystem() {
+            indexPointer = 0;
+            const runner = document.getElementById('main-avatar-sprite');
+            runner.style.left = "12%";
+            
+            document.querySelectorAll('.rpg-station').forEach(station => {
+                station.classList.remove('active-node');
+            });
+            
+            document.getElementById('toast-banner-box').style.display = "none";
+            switchState('layer-welcome');
+        }
+    </script>
+</body>
+</html>
