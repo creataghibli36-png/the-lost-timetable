@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Math in Me: Speaker Challenge</title>
+    
+    <!-- FIX: Loader script para gumana at mag-render nang maganda ang LaTeX Math formulas mo -->
+    <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <script>
+        window.MathJax = {
+            tex: { inlineMath: [['$', '$'], ['\\(', '\\)']] }
+        };
+    </script>
+
+    <style>
+        body {
+            background: linear-gradient(180deg, #0f172a, #1e1b4b, #311042);
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            color: #f3e8ff;
+        }
+        .game-container {
+            background: rgba(15, 23, 42, 0.8);
+            padding: 35px;
+            border-radius: 24px;
+            box-shadow: 0 0 40px rgba(192, 132, 252, 0.3);
+            width: 90%;
+            max-width: 480px;
+            text-align: center;
+            border: 2px solid rgba(168, 85, 247, 0.6);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+        }
+        h1 { color: #e9d5ff; margin-bottom: 5px; font-weight: 700; text-shadow: 0 0 15px rgba(216, 180, 254, 0.4); }
+        h3 { color: #c084fc; font-weight: 400; margin-top: 5px; }
+        
+        .audio-wrapper {
+            margin: 20px 0;
+            background: rgba(88, 28, 135, 0.2);
+            border: 1px dashed #a855f7;
+            border-radius: 12px;
+            padding: 8px;
+            display: flex;
+            justify-content: center;
+        }
+        iframe {
+            border: none;
+            border-radius: 8px;
+            background: transparent;
+        }
+
+        #status {
+            font-size: 13px;
+            color: #a78bfa;
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+            margin-bottom: 20px;
+            font-weight: 600;
+        }
+        .clue-box {
+            background: rgba(88, 28, 135, 0.3);
+            padding: 16px;
+            margin: 12px 0;
+            border-radius: 12px;
+            border-left: 5px solid #c084fc;
+            text-align: left;
+            display: none;
+            color: #f3e8ff;
+            font-size: 15px;
+            line-height: 1.5;
+        }
+        .btn {
+            background: linear-gradient(90deg, #a855f7, #7c3aed);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 12px;
+            cursor: pointer;
+            margin: 10px 0;
+            font-weight: bold;
+            letter-spacing: 0.5px;
+            box-shadow: 0 4px 14px rgba(124, 58, 237, 0.4);
+            transition: all 0.2s ease;
+        }
+        .btn:hover { 
+            transform: translateY(-2px); 
+            box-shadow: 0 6px 20px rgba(168, 85, 247, 0.6);
+        }
+        .options { text-align: left; margin: 25px 0; display: none; }
+        .option {
+            padding: 14px;
+            margin: 12px 0;
+            background: rgba(255, 255, 255, 0.03);
+            border: 2px solid #4c1d95;
+            border-radius: 12px;
+            cursor: pointer;
+            font-weight: 500;
+            color: #e9d5ff;
+            transition: all 0.2s ease;
+        }
+        .option:hover { 
+            background: rgba(168, 85, 247, 0.15); 
+            border-color: #a855f7; 
+            transform: translateX(4px);
+        }
+        .correct { background: rgba(34, 197, 94, 0.15) !important; border-color: #22c55e !important; color: #bbf7d0 !important; }
+        .wrong { background: rgba(239, 68, 68, 0.15) !important; border-color: #ef4444 !important; color: #fecaca !important; }
+        .hidden-section { display: none; margin-top: 30px; animation: fadeIn 0.6s ease forwards; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        hr { border: 0; height: 1px; background: rgba(168, 85, 247, 0.3); margin: 25px 0; }
+        ul { padding-left: 20px; }
+        li { margin-bottom: 12px; }
+    </style>
+</head>
+<body>
+
+<div class="game-container">
+    <h1>🎵 Speaker Challenge</h1>
+    <h3>🎧 Unlock My Favorite Song</h3>
+    
+    <!-- Native Embed Player: Playable and functional inside the app -->
+    <div class="audio-wrapper">
+        <iframe src="https://archive.org/embed/em-beihold-numb-little-bug-lyrics&playlist=1&autoplay=0" width="100%" height="60" frameborder="0" webkitallowfullscreen="true" mozallowfullscreen="true" allowfullscreen></iframe>
+    </div>
+    <div id="status">🔊 Use the audio player above as your track clue!</div>
+
+    <!-- Clue 1 -->
+    <div id="clue1" class="clue-box" style="display: block;">
+        <strong>🧩 Clue #1:</strong> The title contains 3 words.
+    </div>
+    <button id="btn1" class="btn" onclick="revealClue(2)">💡 Reveal Hint</button>
+
+    <!-- Clue 2 -->
+    <div id="clue2" class="clue-box">
+        <strong>🧩 Clue #2:</strong> The last word is a small insect.
+    </div>
+    <button id="btn2" class="btn" onclick="revealClue(3)" style="display:none;">💡 Reveal Another Hint</button>
+
+    <!-- Clue 3 -->
+    <div id="clue3" class="clue-box">
+        <strong>🧩 Clue #3:</strong> The song is about feeling emotionally overwhelmed while trying to keep going.
+    </div>
+    <button id="btn3" class="btn" onclick="showOptions()" style="display:none;">🎯 Guess the Song</button>
+
+    <!-- Multiple Choice Options -->
+    <div id="options-container" class="options">
+        <div class="option" onclick="checkAnswer(this, false)">Espresso</div>
+        <div class="option" onclick="checkAnswer(this, true)">Numb Little Bug</div>
+        <div class="option" onclick="checkAnswer(this, false)">Birds of a Feather</div>
+        <div class="option" onclick="checkAnswer(this, false)">Vampire</div>
+    </div>
+
+    <!-- Success Unlocked Area -->
+    <div id="success-area" class="hidden-section">
+        <h2>🎉 Correct! Puzzle Solved!</h2>
+        <p style="color: #c084fc; font-size: 14px;">You successfully deduced the track!</p>
+        <hr>
+        <h3 style="text-align: left; color: #e9d5ff;">🌸 About Me</h3>
+        <p style="text-align: left; font-size: 14px; line-height: 1.6; color: #cbd5e1;">My favorite song is <em>Numb Little Bug</em> because its message reminds me to keep moving forward, even when life feels overwhelming.</p>
+        
+        <h3 style="text-align: left; color: #e9d5ff;">🧠 Math Connection</h3>
+        <ul style="text-align: left; font-size: 14px; line-height: 1.6; color: #cbd5e1;">
+            <li><strong>Rhythm:</strong> Follows fractional, repeating geometric patterns.</li>
+            <li><strong>Tempo:</strong> Evaluated as a rate unit of Beats Per Minute ($BPM = \frac{\text{beats}}{\text{minute}}$).</li>
+            <li><strong>Structures:</strong> Operates on repeating algebraic sequences ($ABABCB$).</li>
+        </ul>
+    </div>
+</div>
+
+<script>
+    function revealClue(num) {
+        document.getElementById('clue' + num).style.display = 'block';
+        document.getElementById('btn' + (num - 1)).style.display = 'none';
+        document.getElementById('btn' + num).style.display = 'inline-block';
+    }
+
+    function showOptions() {
+        document.getElementById('btn3').style.display = 'none';
+        document.getElementById('options-container').style.display = 'block';
+    }
+
+    function checkAnswer(element, isCorrect) {
+        if(isCorrect) {
+            element.classList.add('correct');
+            document.getElementById('status').innerText = "🔓 Speaker Challenge Completed!";
+            document.getElementById('success-area').style.display = 'block';
+            
+            // Re-render LaTeX math layout just for the hidden dynamic section
+            if(window.MathJax) {
+                MathJax.typesetPromise();
+            }
+            
+            let options = document.getElementsByClassName('option');
+            for(let opt of options) { opt.onclick = null; }
+        } else {
+            element.classList.add('wrong');
+            alert("❌ Try again, Bes!");
+        }
+    }
+</script>
+
+</body>
+</html>
