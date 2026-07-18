@@ -1,0 +1,357 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Flappy Budget Boss - Cozy Edition</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Nunito:wght@600;800&display=swap');
+
+        body {
+            font-family: 'Nunito', sans-serif;
+            background: linear-gradient(135deg, #2b143d 0%, #512b54 100%);
+            margin: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            overflow: hidden;
+            color: #4a2143;
+        }
+        #game-container {
+            position: relative;
+            width: 400px;
+            height: 600px;
+            background: linear-gradient(to bottom, #7b5987 0%, #c47696 50%, #f4c2c2 100%);
+            border: 5px solid #dfa2c2;
+            border-radius: 15px;
+            overflow: hidden;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.5), 0 0 20px rgba(232, 165, 178, 0.4);
+        }
+        canvas {
+            display: block;
+        }
+        .ui-screen {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(255, 240, 245, 0.95);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            padding: 25px;
+            box-sizing: border-box;
+            z-index: 10;
+        }
+        .hidden { display: none !important; }
+        
+        h1 { color: #844c7d; margin-bottom: 10px; font-size: 30px; text-shadow: 2px 2px 0px #fce2c2; }
+        p { color: #5c3a58; font-size: 16px; line-height: 1.5; }
+        
+        .action-btn {
+            background: linear-gradient(to bottom, #df86b4, #b9588d);
+            color: white;
+            border: 3px solid #fce2c2;
+            padding: 15px 35px;
+            border-radius: 30px;
+            font-size: 18px;
+            font-weight: 800;
+            cursor: pointer;
+            margin-top: 20px;
+            box-shadow: 0 5px 0 #844c7d;
+            transition: all 0.1s;
+        }
+        .action-btn:active {
+            transform: translateY(5px);
+            box-shadow: 0 0 0 #844c7d;
+        }
+        
+        .win-scroll-box {
+            background: #fff;
+            border: 3px solid #df86b4;
+            border-radius: 15px;
+            padding: 15px 20px;
+            text-align: left;
+            width: 100%;
+            height: 380px;
+            overflow-y: auto;
+            box-shadow: inset 0 3px 8px rgba(0,0,0,0.05);
+            margin-bottom: 10px;
+        }
+        .win-scroll-box h3 { color: #844c7d; margin-top: 15px; font-size: 18px; font-weight: 800; border-bottom: 2px dashed #df86b4; padding-bottom: 5px; }
+        .win-scroll-box p { font-size: 15px; margin-top: 8px; }
+        .win-subtitle { font-weight: 800; color: #b9588d; font-size: 15px; margin-bottom: 15px;}
+        .math-list { margin: 5px 0; padding-left: 20px; font-size: 15px; font-weight: 600; }
+        .math-list li { margin-bottom: 8px; }
+        
+        #hud {
+            position: absolute;
+            top: 15px; left: 15px;
+            font-size: 22px; font-weight: 800; color: white;
+            text-shadow: 2px 2px 0 #844c7d, -1px -1px 0 #844c7d, 1px -1px 0 #844c7d, -1px 1px 0 #844c7d, 1px 1px 0 #844c7d;
+            z-index: 5;
+            background: rgba(255, 255, 255, 0.3);
+            padding: 5px 15px;
+            border-radius: 20px;
+        }
+    </style>
+</head>
+<body>
+
+<div id="game-container">
+    <canvas id="gameCanvas" width="400" height="600"></canvas>
+    
+    <div id="hud">🌸 ₱<span id="budget-display">15,000</span></div>
+
+    <!-- START SCREEN -->
+    <div id="screen-start" class="ui-screen">
+        <h1>🐷 Cozy Budget Boss</h1>
+        <p>You are a determined Piggy Bank!</p>
+        <p>Press <strong>SPACEBAR</strong> or <strong>TAP</strong> to fly.<br><br>Fly through the magical gaps to pay your essential Needs. Avoid hitting the purple pillars (Wants) or the ground!</p>
+        <button class="action-btn" onclick="startGame()">Start Flying ✨</button>
+    </div>
+
+    <!-- GAME OVER SCREEN -->
+    <div id="screen-gameover" class="ui-screen hidden">
+        <div style="font-size: 50px;">🥀</div>
+        <h1 style="color: #a4303f; text-shadow: none;">Oh no! Game Over</h1>
+        <p>You hit a "Want" trap or fell to the ground! Your budget ran out before you secured your essentials.</p>
+        <button class="action-btn" onclick="resetGame()">🔄 Try Again</button>
+    </div>
+
+    <!-- WIN SCREEN -->
+    <div id="screen-win" class="ui-screen hidden">
+        <h1 style="margin-top: 0; font-size: 26px;">🎉 Budget Complete!</h1>
+        <p class="win-subtitle">💰 Congratulations! You successfully managed my ₱15,000 monthly budget without overspending.</p>
+        
+        <div class="win-scroll-box">
+            <h3>🌸 What This Says About Me</h3>
+            <p>Managing money is an important part of my life. I enjoy planning my expenses, setting aside savings, and making sure I don't spend beyond my budget. Using mathematics helps me make responsible financial decisions and stay focused on my long-term goals.</p>
+            
+            <h3>🧮 Math in My Life</h3>
+            <p>In this challenge, you used:</p>
+            <ul class="math-list">
+                <li><strong>➕ Addition</strong> to total expenses</li>
+                <li><strong>➖ Subtraction</strong> to track the remaining budget</li>
+                <li><strong>💸 Budgeting</strong> to balance needs and savings</li>
+                <li><strong>📊 Decision-making</strong> to prioritize important expenses</li>
+            </ul>
+            <p><em>These are the same mathematical skills I use when managing my allowance and planning for the future.</em></p>
+
+            <h3>⭐ Fun Fact About Me</h3>
+            <p>I believe every peso has a purpose. That's why I enjoy budgeting and saving—it helps me prepare for future opportunities and reach my goals one step at a time.</p>
+        </div>
+        <button class="action-btn" onclick="resetGame()">🔄 Play Again</button>
+    </div>
+</div>
+
+<script>
+    const canvas = document.getElementById("gameCanvas");
+    const ctx = canvas.getContext("2d");
+
+    let frames = 0;
+    let gameState = "START";
+    let animationId;
+
+    // Budget & Needs Logic - ADDED THE 7TH ITEM TO EQUAL 15,000!
+    const needsCosts = [5000, 2000, 3000, 1000, 1000, 1000, 2000];
+    const needsNames = ["🏠 Rent", "💰 MP2", "🍱 Food", "🚌 Travel", "📚 School", "🧴 Care", "🎉 Bonus!"];
+    let currentNeedIndex = 0;
+    let budget = 15000;
+
+    // Bird (Piggy Bank)
+    const bird = {
+        x: 50, y: 250, width: 34, height: 34, 
+        velocity: 0, gravity: 0.25, jump: -5.5,
+        draw: function() {
+            ctx.font = "38px Arial";
+            ctx.fillText("🐷", this.x - 4, this.y + 30);
+        },
+        update: function() {
+            this.velocity += this.gravity;
+            this.y += this.velocity;
+            
+            if (this.y + this.height >= canvas.height - 60) {
+                this.y = canvas.height - 60 - this.height;
+                triggerGameOver();
+            }
+            if (this.y <= 0) {
+                this.y = 0;
+                this.velocity = 0;
+            }
+        },
+        flap: function() {
+            this.velocity = this.jump;
+        }
+    };
+
+    // Pipes (Wants/Magical Pillars)
+    const pipes = {
+        position: [], width: 60, gap: 160, dx: 2, totalSpawned: 0,
+        draw: function() {
+            for (let i = 0; i < this.position.length; i++) {
+                let p = this.position[i];
+                let topY = p.y;
+                let bottomY = p.y + this.gap;
+                
+                ctx.fillStyle = "#5c2a5d"; 
+                ctx.fillRect(p.x, 0, this.width, topY); 
+                ctx.fillRect(p.x, bottomY, this.width, canvas.height - bottomY - 60); 
+                
+                ctx.fillStyle = "#a15286";
+                ctx.fillRect(p.x - 5, topY - 15, this.width + 10, 15); 
+                ctx.fillRect(p.x - 5, bottomY, this.width + 10, 15); 
+
+                if (!p.passed && p.needIndex < needsNames.length) {
+                    ctx.fillStyle = "#fff";
+                    ctx.font = "bold 18px Nunito, Arial";
+                    ctx.textAlign = "center";
+                    ctx.shadowColor = "#844c7d";
+                    ctx.shadowBlur = 4;
+                    ctx.shadowOffsetX = 2;
+                    ctx.shadowOffsetY = 2;
+                    ctx.fillText(needsNames[p.needIndex], p.x + (this.width/2), p.y + (this.gap / 2) + 6);
+                    ctx.shadowBlur = 0; 
+                    ctx.shadowOffsetX = 0;
+                    ctx.shadowOffsetY = 0;
+                    ctx.textAlign = "left"; 
+                }
+            }
+        },
+        update: function() {
+            // UPDATED TO SPAWN 7 PIPES
+            if (frames % 130 === 0 && this.totalSpawned < 7) {
+                this.position.push({
+                    x: canvas.width,
+                    y: Math.random() * (canvas.height - this.gap - 160) + 40,
+                    passed: false,
+                    needIndex: this.totalSpawned
+                });
+                this.totalSpawned++;
+            }
+
+            for (let i = 0; i < this.position.length; i++) {
+                let p = this.position[i];
+                p.x -= this.dx;
+
+                if (bird.x + bird.width > p.x && bird.x < p.x + this.width &&
+                    (bird.y < p.y || bird.y + bird.height > p.y + this.gap)) {
+                    triggerGameOver();
+                }
+
+                if (p.x + this.width < bird.x && !p.passed) {
+                    p.passed = true;
+                    if (currentNeedIndex < needsCosts.length) {
+                        budget -= needsCosts[currentNeedIndex];
+                        currentNeedIndex++;
+                        document.getElementById("budget-display").innerText = budget.toLocaleString();
+                        
+                        // UPDATED TO CHECK FOR 7 ITEMS
+                        if (currentNeedIndex >= 7 && budget === 0) {
+                            triggerWin();
+                        }
+                    }
+                }
+
+                if (p.x + this.width <= 0) {
+                    this.position.shift();
+                    i--;
+                }
+            }
+        },
+        reset: function() { 
+            this.position = []; 
+            this.totalSpawned = 0;
+        }
+    };
+
+    const ground = {
+        y: canvas.height - 60, height: 60,
+        draw: function() {
+            ctx.fillStyle = "#874d65"; 
+            ctx.fillRect(0, this.y, canvas.width, this.height);
+            
+            ctx.fillStyle = "#d18ca8"; 
+            ctx.fillRect(0, this.y, canvas.width, 18);
+            
+            ctx.fillStyle = "#e5a7bf";
+            for(let i=0; i<canvas.width; i+=30) {
+                ctx.fillRect(i + (frames%30)*-1, this.y, 8, 5);
+            }
+        }
+    };
+
+    function draw() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        bird.draw();
+        pipes.draw();
+        ground.draw();
+    }
+
+    function update() {
+        bird.update();
+        pipes.update();
+    }
+
+    function loop() {
+        if (gameState === "PLAYING") {
+            update();
+            draw();
+            frames++;
+            animationId = requestAnimationFrame(loop);
+        }
+    }
+
+    window.addEventListener("keydown", function(e) {
+        if (e.code === "Space") {
+            if (gameState === "PLAYING") bird.flap();
+            e.preventDefault();
+        }
+    });
+    canvas.addEventListener("mousedown", function() {
+        if (gameState === "PLAYING") bird.flap();
+    });
+    canvas.addEventListener("touchstart", function(e) {
+        if (gameState === "PLAYING") bird.flap();
+        e.preventDefault();
+    });
+
+    function startGame() {
+        document.getElementById("screen-start").classList.add("hidden");
+        gameState = "PLAYING";
+        frames = 0;
+        bird.y = 250;
+        bird.velocity = 0;
+        pipes.reset();
+        budget = 15000;
+        currentNeedIndex = 0;
+        document.getElementById("budget-display").innerText = budget.toLocaleString();
+        loop();
+    }
+
+    function triggerGameOver() {
+        gameState = "GAMEOVER";
+        cancelAnimationFrame(animationId);
+        document.getElementById("screen-gameover").classList.remove("hidden");
+    }
+
+    function triggerWin() {
+        gameState = "WIN";
+        cancelAnimationFrame(animationId);
+        setTimeout(() => {
+            document.getElementById("screen-win").classList.remove("hidden");
+        }, 300);
+    }
+
+    function resetGame() {
+        document.getElementById("screen-gameover").classList.add("hidden");
+        document.getElementById("screen-win").classList.add("hidden");
+        startGame();
+    }
+
+    draw();
+</script>
+
+</body>
+</html>
