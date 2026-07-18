@@ -1,0 +1,412 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>The Mathematics of Me - Budget Boss</title>
+    <!-- Swapped to a much more readable pixel font for numbers -->
+    <link href="https://fonts.googleapis.com/css2?family=VT323&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'VT323', monospace;
+            background-color: #1a0b2e;
+            margin: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            overflow: hidden;
+            color: #3b1c4a;
+        }
+        
+        #game-container {
+            position: relative;
+            width: 450px;
+            height: 650px;
+            background: linear-gradient(to bottom, #3b1a51 0%, #7d316e 35%, #d26177 65%, #f6a576 100%);
+            border: 6px solid #2d163d;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 0 0 4px #5c2c6d, 0 15px 35px rgba(0,0,0,0.8);
+            image-rendering: pixelated; 
+        }
+
+        canvas {
+            display: block;
+            image-rendering: pixelated;
+        }
+
+        .ui-screen {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(45, 22, 61, 0.7);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            padding: 20px;
+            box-sizing: border-box;
+            z-index: 10;
+        }
+
+        .hidden { display: none !important; }
+
+        .dialog-box {
+            background: #ffe6f0;
+            border: 4px solid #b25c86;
+            border-radius: 8px;
+            padding: 20px;
+            box-shadow: inset -4px -4px 0px rgba(0,0,0,0.1), 4px 4px 0px rgba(0,0,0,0.5);
+            width: 90%;
+        }
+        
+        h1 { color: #d66195; margin-top: 0; margin-bottom: 10px; font-size: 38px; text-shadow: 2px 2px 0px #fff; letter-spacing: 1px; }
+        p { color: #4a2566; font-size: 22px; line-height: 1.2; margin-bottom: 10px; }
+        
+        .action-btn {
+            background: #d66195;
+            color: white;
+            border: 4px solid #fff;
+            padding: 12px 30px;
+            border-radius: 12px;
+            font-size: 26px;
+            font-family: 'VT323', monospace;
+            cursor: pointer;
+            margin-top: 15px;
+            box-shadow: inset -4px -4px 0px rgba(0,0,0,0.2), 4px 4px 0px rgba(0,0,0,0.4);
+            transition: all 0.1s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            width: 80%;
+            margin-left: auto;
+            margin-right: auto;
+        }
+        
+        .action-btn:active {
+            transform: translate(4px, 4px);
+            box-shadow: inset -2px -2px 0px rgba(0,0,0,0.2), 0px 0px 0px rgba(0,0,0,0.4);
+        }
+
+        .btn-purple { background: #7d316e; }
+
+        .win-scroll-box {
+            background: #fff;
+            border: 4px solid #b25c86;
+            padding: 15px;
+            text-align: left;
+            width: 100%;
+            height: 280px;
+            overflow-y: auto;
+            box-shadow: inset -4px -4px 0px rgba(0,0,0,0.05);
+            margin-bottom: 10px;
+            box-sizing: border-box;
+        }
+        
+        .win-scroll-box h3 { color: #d66195; margin-top: 10px; font-size: 24px; border-bottom: 2px dotted #d66195; padding-bottom: 5px; }
+        .win-scroll-box p, .win-scroll-box ul { font-size: 16px; font-family: sans-serif; }
+        .math-list { margin: 5px 0; padding-left: 20px; color: #4a2566; }
+        .math-list li { margin-bottom: 8px; }
+
+        #hud {
+            position: absolute;
+            top: 15px; left: 15px;
+            font-size: 32px; color: #fff;
+            text-shadow: 3px 3px 0 #4a2566, -2px -2px 0 #4a2566, 2px -2px 0 #4a2566, -2px 2px 0 #4a2566;
+            z-index: 5;
+        }
+    </style>
+</head>
+<body>
+
+<div id="game-container">
+    <canvas id="gameCanvas" width="450" height="650"></canvas>
+    
+    <div id="hud">💖 Lv.1 | ₱<span id="budget-display">15,000</span></div>
+
+    <!-- START SCREEN -->
+    <div id="screen-start" class="ui-screen">
+        <div class="dialog-box">
+            <h1>The Mathematics of Me</h1>
+            <p>Math is not just in books.<br>It's in me, in my life, and in my dreams. ✨</p>
+            <p style="font-size: 18px; margin-top: 20px; color: #b25c86;">[ SPACEBAR or TAP to jump ]<br>Collect Needs. Avoid Wants.</p>
+        </div>
+        <button class="action-btn" onclick="startGame()">💖 START GAME 💖</button>
+    </div>
+
+    <!-- GAME OVER SCREEN -->
+    <div id="screen-gameover" class="ui-screen hidden">
+        <div class="dialog-box">
+            <h1 style="color: #a4303f;">GAME OVER</h1>
+            <p>You hit a "Want" trap or fell!</p>
+            <p>Your budget ran out before you secured your essentials.</p>
+        </div>
+        <button class="action-btn btn-purple" onclick="resetGame()">⭐ CONTINUE ⭐</button>
+    </div>
+
+    <!-- WIN SCREEN -->
+    <div id="screen-win" class="ui-screen hidden">
+        <div class="dialog-box" style="width: 95%; padding: 15px;">
+            <h1 style="font-size: 32px; margin-bottom: 5px;">🎉 Budget Complete!</h1>
+            <p style="font-size: 20px; color: #7d316e;">You successfully managed the ₱15,000 budget!</p>
+            
+            <div class="win-scroll-box">
+                <h3>🌸 What This Says About Me</h3>
+                <p>Managing money is an important part of my life. I enjoy planning my expenses, setting aside savings, and making sure I don't spend beyond my budget. Using mathematics helps me make responsible financial decisions and stay focused on my long-term goals.</p>
+                
+                <h3>🧮 Math in My Life</h3>
+                <p>In this challenge, you used:</p>
+                <ul class="math-list">
+                    <li><strong>➕ Addition</strong> to total expenses</li>
+                    <li><strong>➖ Subtraction</strong> to track the remaining budget</li>
+                    <li><strong>💸 Budgeting</strong> to balance needs and savings</li>
+                    <li><strong>📊 Decision-making</strong> to prioritize important expenses</li>
+                </ul>
+                <p><em>These are the same mathematical skills I use when managing my allowance and planning for the future.</em></p>
+
+                <h3>⭐ Fun Fact About Me</h3>
+                <p>I believe every peso has a purpose. That's why I enjoy budgeting and saving—it helps me prepare for future opportunities and reach my goals one step at a time.</p>
+            </div>
+            <button class="action-btn" onclick="resetGame()">📖 JOURNAL 📖</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    const canvas = document.getElementById("gameCanvas");
+    const ctx = canvas.getContext("2d");
+
+    let frames = 0;
+    let gameState = "START";
+    let animationId;
+
+    const needsCosts = [5000, 2000, 3000, 1000, 1000, 1000, 2000];
+    const needsNames = ["🏠 Rent", "💰 MP2", "🍱 Food", "🚌 Travel", "📚 School", "🧴 Care", "🎉 Bonus!"];
+    let currentNeedIndex = 0;
+    let budget = 15000;
+
+    const bird = {
+        x: 60, y: 250, width: 30, height: 35, 
+        velocity: 0, gravity: 0.3, jump: -6.5,
+        draw: function() {
+            ctx.save(); 
+            ctx.font = "35px Arial";
+            ctx.scale(-1, 1);
+            ctx.fillText("🏃🏽‍♀️", -this.x - 35, this.y + 30);
+            ctx.restore(); 
+        },
+        update: function() {
+            this.velocity += this.gravity;
+            this.y += this.velocity;
+            
+            if (this.y + this.height >= canvas.height - 70) {
+                this.y = canvas.height - 70 - this.height;
+                triggerGameOver();
+            }
+            if (this.y <= 0) {
+                this.y = 0;
+                this.velocity = 0;
+            }
+        },
+        flap: function() {
+            this.velocity = this.jump;
+        }
+    };
+
+    const pipes = {
+        position: [], width: 70, gap: 170, dx: 2.5, totalSpawned: 0,
+        draw: function() {
+            for (let i = 0; i < this.position.length; i++) {
+                let p = this.position[i];
+                let topY = p.y;
+                let bottomY = p.y + this.gap;
+                
+                ctx.fillStyle = "#2d163d"; 
+                ctx.fillRect(p.x, 0, this.width, topY); 
+                ctx.fillRect(p.x, bottomY, this.width, canvas.height - bottomY - 70); 
+                
+                ctx.fillStyle = "#4a2566";
+                ctx.fillRect(p.x, 0, 8, topY); 
+                ctx.fillRect(p.x, bottomY, 8, canvas.height - bottomY - 70); 
+                
+                ctx.fillStyle = "#1a0b2e";
+                ctx.fillRect(p.x - 5, topY - 20, this.width + 10, 20); 
+                ctx.fillRect(p.x - 5, bottomY, this.width + 10, 20); 
+
+                if (!p.passed && p.needIndex < needsNames.length) {
+                    ctx.fillStyle = "#fff";
+                    ctx.font = "24px 'VT323'";
+                    ctx.textAlign = "center";
+                    ctx.shadowColor = "#000";
+                    ctx.shadowBlur = 0;
+                    ctx.shadowOffsetX = 3;
+                    ctx.shadowOffsetY = 3;
+                    ctx.fillText(needsNames[p.needIndex], p.x + (this.width/2), p.y + (this.gap / 2) + 8);
+                    ctx.shadowOffsetX = 0;
+                    ctx.shadowOffsetY = 0;
+                    ctx.textAlign = "left"; 
+                }
+            }
+        },
+        update: function() {
+            if (frames % 120 === 0 && this.totalSpawned < 7) {
+                this.position.push({
+                    x: canvas.width,
+                    y: Math.random() * (canvas.height - this.gap - 180) + 50,
+                    passed: false,
+                    needIndex: this.totalSpawned
+                });
+                this.totalSpawned++;
+            }
+
+            for (let i = 0; i < this.position.length; i++) {
+                let p = this.position[i];
+                p.x -= this.dx;
+
+                if (bird.x + bird.width > p.x + 5 && bird.x < p.x + this.width - 5 &&
+                    (bird.y + 5 < p.y || bird.y + bird.height - 5 > p.y + this.gap)) {
+                    triggerGameOver();
+                }
+
+                if (p.x + this.width < bird.x && !p.passed) {
+                    p.passed = true;
+                    if (currentNeedIndex < needsCosts.length) {
+                        budget -= needsCosts[currentNeedIndex];
+                        currentNeedIndex++;
+                        document.getElementById("budget-display").innerText = budget.toLocaleString();
+                        
+                        if (currentNeedIndex >= 7 && budget === 0) {
+                            triggerWin();
+                        }
+                    }
+                }
+
+                if (p.x + this.width <= 0) {
+                    this.position.shift();
+                    i--;
+                }
+            }
+        },
+        reset: function() { 
+            this.position = []; 
+            this.totalSpawned = 0;
+        }
+    };
+
+    function drawBackground() {
+        ctx.fillStyle = "#4a2566"; 
+        ctx.fillRect(50, 400, 60, 200);
+        ctx.fillRect(130, 350, 80, 300);
+        ctx.fillRect(250, 420, 50, 200);
+        ctx.fillRect(320, 310, 90, 300);
+        
+        ctx.fillStyle = "#2d163d"; 
+        ctx.fillRect(10, 450, 70, 200);
+        ctx.fillRect(100, 410, 60, 200);
+        ctx.fillRect(200, 480, 80, 200);
+        ctx.fillRect(350, 430, 100, 200);
+        
+        ctx.fillStyle = "#fff";
+        ctx.fillRect(40, 50, 4, 4);
+        ctx.fillRect(150, 80, 4, 4);
+        ctx.fillRect(350, 60, 4, 4);
+        ctx.fillRect(400, 120, 4, 4);
+        ctx.fillRect(250, 40, 4, 4);
+    }
+
+    const ground = {
+        y: canvas.height - 70, height: 70,
+        draw: function() {
+            ctx.fillStyle = "#3b1c4a"; 
+            ctx.fillRect(0, this.y, canvas.width, this.height);
+            
+            ctx.fillStyle = "#2d544f"; 
+            ctx.fillRect(0, this.y, canvas.width, 15);
+            
+            ctx.fillStyle = "#477c75";
+            for(let i=0; i<canvas.width; i+=25) {
+                ctx.fillRect(i + (frames%25)*-1, this.y, 10, 8);
+            }
+            
+            ctx.fillStyle = "#d66195";
+            ctx.fillRect((100 - (frames*2)%canvas.width + canvas.width)%canvas.width, this.y + 20, 6, 6);
+            ctx.fillRect((250 - (frames*2)%canvas.width + canvas.width)%canvas.width, this.y + 35, 6, 6);
+            ctx.fillRect((400 - (frames*2)%canvas.width + canvas.width)%canvas.width, this.y + 15, 6, 6);
+        }
+    };
+
+    function draw() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        drawBackground();
+        pipes.draw();
+        bird.draw();
+        ground.draw();
+    }
+
+    function update() {
+        bird.update();
+        pipes.update();
+    }
+
+    function loop() {
+        if (gameState === "PLAYING") {
+            update();
+            draw();
+            frames++;
+            animationId = requestAnimationFrame(loop);
+        }
+    }
+
+    window.addEventListener("keydown", function(e) {
+        if (e.code === "Space") {
+            if (gameState === "PLAYING") bird.flap();
+            e.preventDefault();
+        }
+    });
+    canvas.addEventListener("mousedown", function(e) {
+        if (gameState === "PLAYING" && e.target.tagName !== "BUTTON") bird.flap();
+    });
+    canvas.addEventListener("touchstart", function(e) {
+        if (gameState === "PLAYING" && e.target.tagName !== "BUTTON") bird.flap();
+    });
+
+    function startGame() {
+        document.getElementById("screen-start").classList.add("hidden");
+        document.getElementById("screen-gameover").classList.add("hidden");
+        document.getElementById("screen-win").classList.add("hidden");
+        gameState = "PLAYING";
+        frames = 0;
+        bird.y = 250;
+        bird.velocity = 0;
+        pipes.reset();
+        budget = 15000;
+        currentNeedIndex = 0;
+        document.getElementById("budget-display").innerText = "15,000";
+        loop();
+    }
+
+    function triggerGameOver() {
+        gameState = "GAMEOVER";
+        cancelAnimationFrame(animationId);
+        document.getElementById("screen-gameover").classList.remove("hidden");
+    }
+
+    function triggerWin() {
+        gameState = "WIN";
+        cancelAnimationFrame(animationId);
+        setTimeout(() => {
+            document.getElementById("screen-win").classList.remove("hidden");
+        }, 300);
+    }
+
+    function resetGame() {
+        startGame();
+    }
+
+    draw();
+</script>
+
+</body>
+</html>
