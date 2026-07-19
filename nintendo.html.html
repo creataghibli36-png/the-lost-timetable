@@ -1,0 +1,419 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>THE TIMELINE NODE ENGINE 🎮 Sakura Handheld</title>
+    <!-- Custom Retro Pixel Font -->
+    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --console-pink: #FFB6D9;
+            --console-dark-pink: #FF94C2;
+            --screen-bg: #1A1525; 
+            --pixel-blue: #00E5FF; 
+            --pixel-pink: #FF66B2;
+            --pixel-dark: #FFFFFF; 
+            --pastel-yellow: #FFFA75;
+            --pastel-green: #9EFF9E;
+            --pastel-purple: #D5BFFF;
+            --sakura-pink: #FF94C2;
+            --outline-dark: #2B2228;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Press Start 2P', monospace;
+            user-select: none;
+            image-rendering: pixelated;
+        }
+
+        body {
+            background: linear-gradient(180deg, #120C1F 0%, #241435 50%, #431D4A 100%);
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow: hidden;
+            position: relative;
+        }
+
+        /* 🎮 Handheld Console Outer Chassis Frame */
+        .handheld-console {
+            width: 480px;
+            background: var(--console-pink);
+            border: 8px solid #FFF;
+            border-radius: 32px;
+            box-shadow: 0 14px 0 var(--console-dark-pink), 0 25px 35px rgba(0,0,0,0.5);
+            padding: 24px;
+            z-index: 10;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            position: relative;
+        }
+
+        .brand-logo {
+            font-size: 11px;
+            color: #FFF;
+            text-shadow: 2px 2px 0px var(--console-dark-pink);
+            margin-bottom: 12px;
+            letter-spacing: 1px;
+        }
+
+        /* 📺 Screen Housing */
+        .game-screen-outer {
+            width: 100%;
+            background: #2B2228;
+            border: 6px solid #4E4149;
+            border-radius: 16px;
+            padding: 12px;
+            box-shadow: inset 0 6px 0 rgba(0,0,0,0.6);
+            margin-bottom: 16px;
+        }
+
+        .game-screen {
+            width: 100%;
+            height: 340px;
+            background-color: var(--screen-bg);
+            border: 4px solid #000;
+            border-radius: 8px;
+            overflow: hidden;
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            color: var(--pixel-dark);
+            font-size: 10px;
+            font-weight: bold;
+            line-height: 1.6;
+            box-shadow: inset 0 0 20px rgba(0, 229, 255, 0.15);
+        }
+
+        .view-frame {
+            display: none;
+            flex: 1;
+            padding: 16px;
+            flex-direction: column;
+            align-items: center;
+            justify-content: space-between;
+            text-align: center;
+            width: 100%;
+            height: 100%;
+        }
+        .view-frame.active { display: flex; }
+
+        /* 🌸 Timeline UI Tracker Map */
+        .viewport-map {
+            width: 100%;
+            height: 70px;
+            background: #251D33;
+            border: 3px dashed var(--pixel-pink);
+            border-radius: 8px;
+            position: relative;
+            margin-top: 8px;
+        }
+
+        .path-line {
+            position: absolute;
+            bottom: 24px;
+            left: 5%;
+            width: 90%;
+            height: 4px;
+            background: var(--pastel-purple);
+            opacity: 0.6;
+        }
+
+        .node-station {
+            position: absolute;
+            bottom: 12px;
+            font-size: 16px;
+            background: #1A1525;
+            border: 2px solid #555;
+            border-radius: 50%;
+            width: 26px;
+            height: 26px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+        }
+
+        .node-station.active-node {
+            border-color: var(--pixel-blue);
+            box-shadow: 0 0 8px var(--pixel-blue);
+            transform: scale(1.1);
+        }
+
+        .chibi-runner {
+            position: absolute;
+            bottom: 14px;
+            left: 4%;
+            width: 24px;
+            height: 24px;
+            font-size: 16px;
+            z-index: 20;
+            transition: left 0.6s cubic-bezier(0.25, 0.8, 0.25, 1);
+        }
+
+        /* Dialog Box & Options Layout */
+        .hud-dialog {
+            background: #000;
+            border: 2px solid var(--pixel-blue);
+            border-radius: 6px;
+            padding: 8px;
+            width: 100%;
+            min-height: 54px;
+            font-size: 8px;
+            text-align: left;
+            margin-bottom: 6px;
+            color: var(--pixel-blue);
+        }
+
+        .choices-stack {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            width: 100%;
+        }
+
+        .choice-btn {
+            background: #251D33;
+            border: 2px solid var(--pastel-purple);
+            color: #FFF;
+            padding: 8px;
+            font-size: 8px;
+            border-radius: 6px;
+            cursor: pointer;
+            text-align: left;
+            transition: background 0.2s;
+        }
+        .choice-btn:hover {
+            background: var(--pixel-pink);
+            border-color: #FFF;
+        }
+        .choice-btn:disabled {
+            opacity: 0.3;
+            cursor: not-allowed;
+        }
+
+        /* 🕹️ Retro Controller Controls Interface Bay */
+        .controls-bay {
+            width: 100%;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 10px 0 10px;
+        }
+
+        .d-pad {
+            position: relative; width: 96px; height: 96px;
+        }
+        .d-btn {
+            position: absolute; background: #FFF; border: 4px solid var(--outline-dark);
+            border-radius: 6px; box-shadow: 0 5px 0 rgba(0,0,0,0.2);
+        }
+        .d-up    { top: 0; left: 32px; width: 32px; height: 38px; }
+        .d-down  { bottom: 0; left: 32px; width: 32px; height: 38px; }
+        .d-left  { top: 32px; left: 0; width: 38px; height: 32px; }
+        .d-right { top: 32px; right: 0; width: 38px; height: 32px; }
+
+        .action-cluster {
+            display: flex; gap: 16px;
+        }
+        .action-btn {
+            width: 54px; height: 54px; background: #FFF; border: 4px solid var(--outline-dark);
+            border-radius: 50%; font-size: 14px; font-weight: bold; color: var(--outline-dark);
+            box-shadow: 0 6px 0 rgba(0,0,0,0.2); display: flex; justify-content: center;
+            align-items: center; cursor: pointer;
+        }
+        .action-btn:active, .d-btn:active {
+            transform: translateY(3px);
+            box-shadow: 0 2px 0 rgba(0,0,0,0.2);
+        }
+
+        .action-label {
+            font-size: 8px; color: #FFF; text-align: center; margin-top: 4px;
+        }
+
+        /* Toast feedback alerts */
+        .toast-banner {
+            position: absolute; top: 12px; left: 12px; right: 12px;
+            padding: 6px; border-radius: 4px; font-size: 7px; z-index: 50; display: none;
+            text-align: center;
+        }
+        .toast-banner.success { background: #1B4332; color: #72EFDD; border: 2px solid #72EFDD; }
+        .toast-banner.fail { background: #4A121A; color: #FF85A2; border: 2px solid #FF85A2; }
+
+        .menu-btn {
+            background: var(--pixel-blue); color: #000; padding: 10px 16px;
+            border: 3px solid #FFF; border-radius: 6px; font-size: 10px; cursor: pointer;
+            box-shadow: 0 4px 0 #0099AE; margin-top: 10px;
+        }
+        .menu-btn:active { transform: translateY(2px); box-shadow: 0 2px 0 #0099AE; }
+    </style>
+</head>
+<body>
+
+    <div class="handheld-console">
+        <div class="brand-logo">SAKURA TIMELINE EDITION</div>
+        
+        <!-- 📺 Screen Housing -->
+        <div class="game-screen-outer">
+            <div class="game-screen">
+                
+                <!-- Feedback Alert Banner -->
+                <div id="toast-alert" class="toast-banner"></div>
+
+                <!-- FRAME 1: START SCREEN -->
+                <div id="frame-welcome" class="view-frame active">
+                    <h2 style="color: var(--pixel-pink); font-size: 13px; margin-top: 10px;">TIMELINE ENGINE</h2>
+                    <p style="font-size: 8px; line-height: 1.8; color: var(--pastel-purple);">
+                        Sequence all core baseline milestone cards chronologically to run the timeline!
+                    </p>
+                    <button class="menu-btn" onclick="startTimelineGame()">PRESS START</button>
+                    <div style="font-size: 7px; color: #777;">SYSTEM v1.1.0</div>
+                </div>
+
+                <!-- FRAME 2: GAMEPLAY LAYER -->
+                <div id="frame-gameplay" class="view-frame">
+                    <div class="viewport-map">
+                        <div class="path-line"></div>
+                        <div class="node-station" id="node-0" style="left: 20%;">🎓</div>
+                        <div class="node-station" id="node-1" style="left: 36%;">🧾</div>
+                        <div class="node-station" id="node-2" style="left: 52%;">✈️</div>
+                        <div class="node-station" id="node-3" style="left: 68%;">💼</div>
+                        <div class="node-station" id="node-4" style="left: 84%;">⚖️</div>
+                        <div class="chibi-runner" id="player-sprite">👩‍🎓</div>
+                    </div>
+
+                    <div class="hud-dialog">
+                        <span id="objective-step" style="color: var(--pixel-pink); display: block; margin-bottom: 2px;">STEP 01:</span>
+                        <span id="question-text">Loading baseline objective fragment parameters...</span>
+                    </div>
+
+                    <div class="choices-stack" id="choices-box"></div>
+                </div>
+
+                <!-- FRAME 3: COMPLETE/WIN LAYER -->
+                <div id="frame-complete" class="view-frame">
+                    <h2 style="color: var(--pastel-green); font-size: 12px; margin-top: 15px;">🎉 SUCCESS!</h2>
+                    <div class="hud-dialog" style="font-size: 7px; line-height: 1.6; color: #FFF; min-height: 120px;">
+                        [TIMELINE SYNCHRONIZED]<br><br>
+                        Sequential tracking structures executed properly. Abstract long-term target milestones successfully verified via chronological logic constraints!
+                    </div>
+                    <button class="menu-btn" style="background: var(--pastel-green); box-shadow: 0 4px 0 #5EBA5E;" onclick="resetTimelineGame()">PLAY AGAIN</button>
+                </div>
+
+            </div>
+        </div>
+
+        <!-- 🕹️ Physical Button Interfaces -->
+        <div class="controls-bay">
+            <div class="d-pad">
+                <div class="d-btn d-up"></div>
+                <div class="d-left d-btn"></div>
+                <div class="d-right d-btn"></div>
+                <div class="d-down d-btn"></div>
+            </div>
+            <div class="action-cluster">
+                <div>
+                    <div class="action-btn" onclick="triggerAction('B')">B</div>
+                    <div class="action-label">SELECT</div>
+                </div>
+                <div>
+                    <div class="action-btn" style="background: var(--console-dark-pink);" onclick="triggerAction('A')">A</div>
+                    <div class="action-label">ACCEPT</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const timelineData = [
+            { id: "college", text: "Graduate from College", query: "What serves as your core undergraduate educational baseline?", stopX: "20%" },
+            { id: "cpa", text: "Become a CPA", query: "Which professional certification locks down your finance expertise directly after?", stopX: "36%" },
+            { id: "taiwan", text: "Study Abroad (Taiwan)", query: "Where are we flying to acquire a global market terminal outlook?", stopX: "52%" },
+            { id: "career", text: "Build Corporate Career", query: "Time to gain corporate structural run-time inside the industry.", stopX: "68%" },
+            { id: "law", text: "Study Law", query: "What stands as your final long-term terminal educational milestone?", stopX: "84%" }
+        ];
+
+        let activeIndex = 0;
+
+        function navigateFrame(frameId) {
+            document.querySelectorAll('.view-frame').forEach(frame => frame.classList.remove('active'));
+            document.getElementById(frameId).classList.add('active');
+        }
+
+        function startTimelineGame() {
+            navigateFrame('frame-gameplay');
+            loadCurrentStep();
+        }
+
+        function loadCurrentStep() {
+            document.getElementById('objective-step').innerText = `STEP 0${activeIndex + 1} / 05:`;
+            document.getElementById('question-text').innerText = timelineData[activeIndex].query;
+
+            const box = document.getElementById('choices-box');
+            box.innerHTML = '';
+
+            // Generate randomized choices
+            const randomized = [...timelineData].sort(() => Math.random() - 0.5);
+            randomized.forEach(item => {
+                const btn = document.createElement('button');
+                btn.className = 'choice-btn';
+                btn.innerText = item.text;
+
+                const actualPos = timelineData.findIndex(el => el.id === item.id);
+                if (actualPos < activeIndex) {
+                    btn.disabled = true;
+                }
+
+                btn.onclick = () => evaluateChoice(item.id, actualPos);
+                box.appendChild(btn);
+            });
+        }
+
+        function evaluateChoice(selectedId, structuralIndex) {
+            const toast = document.getElementById('toast-alert');
+            toast.style.display = 'block';
+
+            if (structuralIndex === activeIndex) {
+                activeIndex++;
+                toast.className = "toast-banner success";
+                toast.innerText = "✓ CORRECT TIMELINE SEQUENCE";
+
+                // Move sprite avatar along the timeline node path
+                document.getElementById('player-sprite').style.left = timelineData[structuralIndex].stopX;
+                document.getElementById(`node-${structuralIndex}`).classList.add('active-node');
+
+                setTimeout(() => {
+                    toast.style.display = 'none';
+                    if (activeIndex === timelineData.length) {
+                        navigateFrame('frame-complete');
+                    } else {
+                        loadCurrentStep();
+                    }
+                }, 1000);
+            } else {
+                toast.className = "toast-banner fail";
+                toast.innerText = "× CAUSALITY VIOLATION: INVALID NODE ORDER";
+                setTimeout(() => { toast.style.display = 'none'; }, 1000);
+            }
+        }
+
+        function resetTimelineGame() {
+            activeIndex = 0;
+            document.getElementById('player-sprite').style.left = "4%";
+            document.querySelectorAll('.node-station').forEach(node => node.classList.remove('active-node'));
+            navigateFrame('frame-welcome');
+        }
+
+        function triggerAction(type) {
+            // Provide retro tactical feedback when physical layout buttons clicked
+            console.log(`Button ${type} pressed.`);
+        }
+    </script>
+</body>
+</html>
