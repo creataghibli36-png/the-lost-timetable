@@ -1,0 +1,702 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>THE LOST TIMETABLE 🎮 Sakura Pixel Handheld</title>
+    <!-- Custom Retro Pixel Font -->
+    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --console-pink: #FFB6D9;
+            --console-dark-pink: #FF94C2;
+            --screen-bg: #EAF9FF;
+            --pixel-blue: #3299FF;
+            --pixel-dark: #2B2228;
+            --pastel-yellow: #FFFA75;
+            --pastel-green: #9EFF9E;
+            --pastel-purple: #D5BFFF;
+            --sakura-pink: #FFC0CB;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Press Start 2P', monospace;
+            image-rendering: pixelated;
+        }
+
+        body {
+            background-color: #FFF0F5;
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow: hidden;
+            position: relative;
+        }
+
+        /* 🌸 Falling Sakura Canvas Background Layer */
+        #sakura-bg-canvas {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            z-index: 1; pointer-events: none;
+        }
+
+        /* 🎮 Handheld Console Outer Chassis Frame */
+        .handheld-console {
+            width: 500px;
+            background: var(--console-pink);
+            border: 8px solid #FFF;
+            border-radius: 32px;
+            box-shadow: 0 18px 0 var(--console-dark-pink), 0 30px 40px rgba(0,0,0,0.15);
+            padding: 30px;
+            z-index: 10;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            position: relative;
+        }
+
+        /* 📺 Screen Housing */
+        .game-screen-outer {
+            width: 100%;
+            background: #4E4149;
+            border: 8px solid #6D5E67;
+            border-radius: 16px;
+            padding: 16px;
+            box-shadow: inset 0 6px 0 rgba(0,0,0,0.4);
+            margin-bottom: 20px;
+        }
+
+        .game-screen {
+            width: 100%;
+            height: 360px;
+            background-color: var(--screen-bg);
+            border: 5px solid var(--pixel-dark);
+            border-radius: 8px;
+            overflow: hidden;
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            color: var(--pixel-dark);
+            font-size: 11px; 
+            font-weight: bold;
+            line-height: 1.6;
+        }
+
+        .view-frame {
+            display: none;
+            flex: 1;
+            padding: 16px;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            position: relative;
+        }
+        .view-frame.active { display: flex; }
+
+        /* 🕹️ Retro Controller Interface Button Components */
+        .controls-bay {
+            width: 100%;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 10px 0 10px;
+        }
+
+        .d-pad {
+            position: relative; width: 96px; height: 96px;
+        }
+        .d-btn {
+            position: absolute; background: #FFF; border: 4px solid var(--pixel-dark);
+            border-radius: 6px; box-shadow: 0 5px 0 rgba(0,0,0,0.2); cursor: pointer;
+        }
+        .d-btn:active { background: #DDD; }
+        .d-up    { top: 0; left: 32px; width: 32px; height: 38px; }
+        .d-down  { bottom: 0; left: 32px; width: 32px; height: 38px; }
+        .d-left  { top: 32px; left: 0; width: 38px; height: 32px; }
+        .d-right { top: 32px; right: 0; width: 38px; height: 32px; }
+
+        .action-cluster {
+            display: flex; gap: 16px; margin-right: 5px;
+        }
+        .action-btn {
+            width: 54px; height: 54px; background: #FFF; border: 4px solid var(--pixel-dark);
+            border-radius: 50%; font-size: 14px; font-weight: bold; color: var(--pixel-dark);
+            box-shadow: 0 6px 0 rgba(0,0,0,0.2); display: flex; justify-content: center;
+            align-items: center; cursor: pointer; transition: all 0.05s; user-select: none;
+        }
+        .action-btn:active { transform: translateY(4px); box-shadow: 0 2px 0 rgba(0,0,0,0.2); background: #DDD; }
+
+        /* 🧩 Puzzle Board Grid System Components */
+        .puzzle-layout {
+            display: grid; grid-template-columns: 1fr 125px; gap: 10px; width: 100%; height: 100%; margin-top: 5px;
+        }
+        .slots-panel {
+            display: flex; flex-direction: column; gap: 8px; justify-content: space-between;
+        }
+        .slot-target-box {
+            background: rgba(255,255,255,0.7); border: 3px dashed #777; border-radius: 8px;
+            height: 58px; display: flex; flex-direction: column; justify-content: center; align-items: center;
+            font-size: 8px; font-weight: bold; transition: all 0.2s; position: relative;
+        }
+        .slot-target-box.selected-target {
+            border: 3px solid var(--pixel-blue);
+            background: rgba(50, 153, 255, 0.15);
+        }
+        .slot-target-box.correct {
+            border-style: solid; border-color: var(--pixel-dark); box-shadow: 0 4px 0 rgba(0,0,0,0.1);
+            animation: popCheck 0.3s ease;
+        }
+
+        .items-chest {
+            display: flex; gap: 8px; justify-content: center; margin-top: 10px; width: 100%;
+        }
+        .draggable-chip {
+            padding: 10px 8px; border: 3px solid var(--pixel-dark); border-radius: 6px;
+            font-size: 7px; font-weight: bold; background: white; box-shadow: 0 4px 0 rgba(0,0,0,0.15);
+            transition: all 0.1s;
+        }
+        .draggable-chip.selected-chip {
+            border-color: var(--pixel-blue);
+            transform: translateY(-4px);
+            box-shadow: 0 8px 0 var(--pixel-blue);
+        }
+
+        .clues-sticky-board {
+            background: #FFFEC2; border: 3px solid var(--pixel-dark); border-radius: 6px;
+            padding: 8px; display: flex; flex-direction: column; gap: 10px; font-size: 7px; text-align: left; line-height: 1.5;
+        }
+
+        /* 📖 Interactive Player Card Pages */
+        .player-card-body {
+            width: 100%; height: 100%; background: white; border: 4px solid var(--pixel-dark);
+            border-radius: 8px; padding: 12px; display: flex; flex-direction: column; text-align: left;
+            position: relative;
+        }
+        .card-row-item {
+            background: var(--screen-bg); border: 3px solid var(--pixel-dark);
+            padding: 8px; margin-bottom: 6px; font-size: 7px; border-radius: 6px;
+        }
+
+        /* 💡 Interactive Pixel Guide Overlap Component */
+        .hint-overlay {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(43, 34, 40, 0.85); display: none;
+            flex-direction: column; justify-content: center; align-items: center; padding: 20px; z-index: 50;
+        }
+        .hint-card {
+            background: white; border: 4px solid var(--pixel-dark); border-radius: 8px;
+            padding: 15px; width: 90%; text-align: left; box-shadow: 0 6px 0 #AAA;
+        }
+
+        /* UI Text Inputs & Animation States */
+        .digital-input {
+            width: 200px; padding: 10px; border: 4px solid var(--pixel-dark);
+            border-radius: 6px; font-size: 14px; text-align: center; margin: 12px 0;
+            background: #FFF; letter-spacing: 3px; font-family: 'Press Start 2P', monospace;
+        }
+
+        .hint-trigger-text {
+            font-size: 8px; color: #E24A67; text-decoration: underline; cursor: pointer; margin-top: 5px;
+        }
+
+        .screen-shake { animation: runScreenShake 0.4s ease; }
+        @keyframes runScreenShake { 0%,100%{transform:translate(0);} 20%,60%{transform:translate(-6px);} 40%,80%{transform:translate(6px);} }
+        @keyframes popCheck { 0%{transform:scale(1);} 50%{transform:scale(1.08);} 100%{transform:scale(1);} }
+
+        #fx-canvas { position: absolute; top:0; left:0; width:100%; height:100%; pointer-events:none; z-index: 100; }
+    </style>
+</head>
+<body>
+
+    <!-- Canvas Engine Layer for Soft Falling Sakura Petals -->
+    <canvas id="sakura-bg-canvas"></canvas>
+
+    <div class="handheld-console" id="device-chassis">
+        
+        <!-- 📺 Game Screen Window Frame Box -->
+        <div class="game-screen-outer">
+            <div class="game-screen" id="app-monitor">
+                <canvas id="fx-canvas"></canvas>
+
+                <!-- 💡 INNER SCREEN HINT PANEL MODULE -->
+                <div class="hint-overlay" id="hint-panel-layer" onclick="toggleHintModal(false)">
+                    <div class="hint-card" onclick="event.stopPropagation()">
+                        <p style="color: var(--pixel-blue); font-size: 8px; margin-bottom: 10px; border-bottom: 2px solid var(--pixel-dark); padding-bottom: 4px;">🌸 Pixel Guide</p>
+                        <p style="font-size: 7px; line-height: 1.6; margin-bottom: 12px;">Hmm...<br>The Student ID is missing!</p>
+                        <p style="font-size: 7px; line-height: 1.6;">Maybe the creator with curly hair 👩‍🦱 and glasses 👓 knows it!</p>
+                        <p style="font-size: 6px; text-align: center; color: #999; margin-top: 15px;">[ Press A or B to close ]</p>
+                    </div>
+                </div>
+
+                <!-- STAGE 1: OS Boot Engine Loading Screen -->
+                <div class="view-frame active" id="view-boot">
+                    <p style="font-size: 12px; letter-spacing: 1px; margin-bottom: 25px; color: var(--pixel-dark);">PIXEL ACADEMY OS</p>
+                    <p style="color: var(--pixel-blue); margin-bottom: 20px; font-size: 9px;">POWERING ON...</p>
+                    <div style="width: 85%; height: 20px; border: 4px solid var(--pixel-dark); background: #FFF; padding: 3px;">
+                        <div id="boot-fill" style="width: 0%; height: 100%; background: var(--pixel-blue);"></div>
+                    </div>
+                </div>
+
+                <!-- STAGE 2: Secure Access Gate Student Entry Login Form -->
+                <div class="view-frame" id="view-login">
+                    <h2 style="font-size: 11px; margin-bottom: 14px; border-bottom: 4px solid var(--pixel-dark); padding-bottom: 6px; width: 100%;">STUDENT LOGIN</h2>
+                    <p style="font-size: 8px; line-height: 1.6; padding: 0 5px;">Use D-PAD Up/Down to toggle digits. Press A to proceed.</p>
+                    <input type="text" class="digital-input" id="input-id-field" readonly value="000000">
+                    <p class="hint-trigger-text" onclick="toggleHintModal(true)">💡 Need a Hint? (Click)</p>
+                    <p id="login-feedback-alert" style="font-size: 8px; font-weight: bold; margin-top: 8px;"></p>
+                </div>
+
+                <!-- STAGE 3: Narrative Text Block Screen Layout Frame -->
+                <div class="view-frame" id="view-story">
+                    <p style="color: #E24A67; font-size: 12px; margin-bottom: 12px; letter-spacing: 1px;">⚠️ ALERT!</p>
+                    <div style="background: white; border: 3px solid var(--pixel-dark); padding: 12px; font-size: 8px; line-height: 1.8; text-align: left; border-radius: 6px;">
+                        Oh no! Monday timetable files are corrupted! Use Game Boy controls to fix them!<br><br><span style="color: var(--pixel-blue);">Press A to START</span>
+                    </div>
+                </div>
+
+                <!-- STAGE 4: Sandbox Puzzle Table Interface Board -->
+                <div class="view-frame" id="view-game" style="padding: 10px;">
+                    <div style="width: 100%; display: flex; justify-content: space-between; font-size: 8px; margin-bottom: 8px; border-bottom: 3px solid var(--pixel-dark); padding-bottom: 4px;">
+                        <span>🌸🌸🌸 MON</span>
+                        <span id="game-sync-label" style="color:var(--pixel-blue);">SYNC: 0%</span>
+                    </div>
+
+                    <div class="puzzle-layout">
+                        <!-- Left Target Column Matrix -->
+                        <div class="slots-panel">
+                            <div class="slot-target-box" id="slot-0" data-target="MATMOD">
+                                <span style="font-size: 6px; color: #666; margin-bottom: 4px;">Period 1 (8:00)</span>
+                                <div class="slot-fill-zone" style="font-size: 8px;">[ EMPTY ]</div>
+                            </div>
+                            <div class="slot-target-box" id="slot-1" data-target="SPIECOC">
+                                <span style="font-size: 6px; color: #666; margin-bottom: 4px;">Period 2 (9:30)</span>
+                                <div class="slot-fill-zone" style="font-size: 8px;">[ EMPTY ]</div>
+                            </div>
+                            <div class="slot-target-box" id="slot-2" data-target="FINACC1">
+                                <span style="font-size: 6px; color: #666; margin-bottom: 4px;">Period 3 (5:00)</span>
+                                <div class="slot-fill-zone" style="font-size: 8px;">[ EMPTY ]</div>
+                            </div>
+                        </div>
+
+                        <!-- Right Pop Sticky Clues Box Panel -->
+                        <div class="clues-sticky-board">
+                            <span style="font-weight: bold; border-bottom: 2px solid #000; padding-bottom: 2px; font-size: 8px;">📋 CLUES:</span>
+                            <div>• FINACC1 is last.</div>
+                            <div>• MATMOD comes before SPIECOC.</div>
+                        </div>
+                    </div>
+
+                    <!-- GameBoy Controlled Fragment Pool Deck -->
+                    <div class="items-chest" id="draggables-deck">
+                        <div class="draggable-chip" id="chip-0" data-subject="SPIECOC" style="background:var(--pastel-green);">SPIECOC</div>
+                        <div class="draggable-chip" id="chip-1" data-subject="FINACC1" style="background:var(--pastel-yellow);">FINACC1</div>
+                        <div class="draggable-chip" id="chip-2" data-subject="MATMOD" style="background:var(--pastel-purple);">MATMOD</div>
+                    </div>
+                </div>
+
+                <!-- STAGE 5: Decrypted Storage Hub Directory Viewer Player Book -->
+                <div class="view-frame" id="view-cards">
+                    
+                    <!-- Page Block 1: Student Records Core Metrics Identity -->
+                    <div class="player-card-body active-card-page" id="card-p1">
+                        <p style="font-size: 8px; font-weight: bold; border-bottom: 3px solid var(--pixel-dark); padding-bottom: 5px; margin-bottom: 10px; color: var(--pixel-blue);">PLAYER CARD 🌸 [1/4]</p>
+                        <div class="card-row-item">👤 Ericka Gabrielle</div>
+                        <div class="card-row-item">🎓 BS Accountancy</div>
+                        <div class="card-row-item">🎂 January 16</div>
+                        <div class="card-row-item">⭐ Freshman Creator</div>
+                    </div>
+
+                    <!-- Page Block 2: Academic Subjects Breakdown Layout Matrix -->
+                    <div class="player-card-body" id="card-p2" style="display: none;">
+                        <p style="font-size: 8px; font-weight: bold; border-bottom: 3px solid var(--pixel-dark); padding-bottom: 5px; margin-bottom: 8px; color: var(--pixel-blue);">MONDAY CLASSES [2/4]</p>
+                        <div style="font-size: 7px; line-height: 1.5;">
+                            • <strong>MATMOD:</strong> Logical modeling frameworks.<br>
+                            • <strong>SPIECOC:</strong> Stats, graphs & analytics.<br>
+                            • <strong>FINACC1:</strong> Financial balance accounting.
+                        </div>
+                    </div>
+
+                    <!-- Page Block 3: Computational Architecture Engine Logic Connections -->
+                    <div class="player-card-body" id="card-p3" style="display: none;">
+                        <p style="font-size: 8px; font-weight: bold; border-bottom: 3px solid var(--pixel-dark); padding-bottom: 5px; margin-bottom: 8px; color: var(--pixel-blue);">GAME LOGIC [3/4]</p>
+                        <div style="font-size: 7px; line-height: 1.5;">
+                            Every click runs math logic:<br>
+                            • <strong>Conditions:</strong> if/else checking routines.<br>
+                            • <strong>Algorithms:</strong> State arrays processing updates.<br>
+                            • <strong>Variables:</strong> Tracker store counts.
+                        </div>
+                    </div>
+
+                    <!-- Page Block 4: Project Academic Synthesis Narrative Reflection -->
+                    <div class="player-card-body" id="card-p4" style="display: none;">
+                        <p style="font-size: 8px; font-weight: bold; border-bottom: 3px solid var(--pixel-dark); padding-bottom: 5px; margin-bottom: 8px; color: var(--pixel-blue);">REFLECTION [4/4]</p>
+                        <p style="font-size: 7px; line-height: 1.5; font-style: italic;">
+                            "This project showed me math isn't just text equations. It coordinates schedule structures, maps out bookkeeping balances, and designs running gaming engines!"
+                        </p>
+                    </div>
+
+                </div>
+
+                <!-- STAGE 6: End Game View Completion Banner -->
+                <div class="view-frame" id="view-clear">
+                    <p style="color: var(--pixel-blue); font-size: 13px; margin-bottom: 15px; animation: popCheck 0.5s infinite; letter-spacing: 1px;">🏆 CLEAR!</p>
+                    <div style="background: white; border: 3px solid var(--pixel-dark); padding: 12px; font-size: 8px; line-height: 1.8; margin-bottom: 12px; border-radius: 6px;">
+                        ✔ Timetable Fixed!<br>✔ Player Card Log Read!<br>✔ Logic System Restored!
+                    </div>
+                    <p style="font-size: 7px; color: #555;">THE END // SEE YOU AGAIN!</p>
+                </div>
+
+            </div>
+        </div>
+
+        <!-- 🕹️ Physical Peripheral Control D-Pad & Action Cluster Triggers -->
+        <div class="controls-bay">
+            <div class="d-pad">
+                <div class="d-btn d-up" onclick="routeDpadInput('up')"></div>
+                <div class="d-btn d-down" onclick="routeDpadInput('down')"></div>
+                <div class="d-btn d-left" onclick="routeDpadInput('left')"></div>
+                <div class="d-btn d-right" onclick="routeDpadInput('right')"></div>
+            </div>
+
+            <div style="font-size: 7px; color: #FFF; font-weight: bold; text-align: center; margin-top: 35px; letter-spacing: 1px;">
+                🌸 POCKET
+            </div>
+
+            <div class="action-cluster">
+                <div class="action-btn" onclick="triggerActionA()">A</div>
+                <div class="action-btn" style="background:var(--console-dark-pink);" onclick="triggerActionB()">B</div>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        let currentScreenStage = "view-boot";
+        let scoreCounterTracker = 0;
+        let activeBookPageNumber = 1;
+
+        // Login Screen Input Trackers
+        let loginNumbersArray = [0,0,0,0,0,0];
+        let loginActiveDigitIndex = 0;
+
+        // Puzzle Navigation Index States
+        let selectedChipIndex = 0;
+        let selectedSlotIndex = 0;
+        let subjectsArray = ["SPIECOC", "FINACC1", "MATMOD"];
+        let solvedSlots = [false, false, false];
+
+        // Custom Handheld Retro Chiptune Synthesis Audio Engine
+        const RetroAudioSystem = {
+            ctx: null,
+            init() { this.ctx = new (window.AudioContext || window.webkitAudioContext)(); },
+            playTone(freq, type, duration, vol=0.08) {
+                if(!this.ctx) this.init();
+                try {
+                    let osc = this.ctx.createOscillator();
+                    let gain = this.ctx.createGain();
+                    osc.type = type;
+                    osc.frequency.setValueAtTime(freq, this.ctx.currentTime);
+                    gain.gain.setValueAtTime(vol, this.ctx.currentTime);
+                    gain.gain.exponentialRampToValueAtTime(0.00001, this.ctx.currentTime + duration);
+                    osc.connect(gain); gain.connect(this.ctx.destination);
+                    osc.start(); osc.stop(this.ctx.currentTime + duration);
+                } catch(e){}
+            },
+            blip() { this.playTone(880, 'square', 0.05, 0.06); },
+            confirm() {
+                this.playTone(587.33, 'square', 0.08, 0.08);
+                setTimeout(() => this.playTone(880, 'square', 0.15, 0.08), 80);
+            },
+            deny() {
+                this.playTone(220, 'sawtooth', 0.12, 0.12);
+                setTimeout(() => this.playTone(147, 'sawtooth', 0.2, 0.12), 100);
+            }
+        };
+
+        function toggleHintModal(shouldShow) {
+            RetroAudioSystem.init();
+            RetroAudioSystem.blip();
+            const panel = document.getElementById('hint-panel-layer');
+            panel.style.display = shouldShow ? 'flex' : 'none';
+        }
+
+        // D-PAD Navigation Controls Router System
+        function routeDpadInput(direction) {
+            RetroAudioSystem.init();
+            RetroAudioSystem.blip();
+
+            if (document.getElementById('hint-panel-layer').style.display === 'flex') return;
+
+            // 1. LOGIN NAVIGATION (Up/Down increases digits, Left/Right shifts spots)
+            if (currentScreenStage === 'view-login') {
+                if (direction === 'up') {
+                    loginNumbersArray[loginActiveDigitIndex] = (loginNumbersArray[loginActiveDigitIndex] + 1) % 10;
+                } else if (direction === 'down') {
+                    loginNumbersArray[loginActiveDigitIndex] = (loginNumbersArray[loginActiveDigitIndex] - 1 + 10) % 10;
+                } else if (direction === 'left') {
+                    loginActiveDigitIndex = (loginActiveDigitIndex - 1 + 6) % 6;
+                } else if (direction === 'right') {
+                    loginActiveDigitIndex = (loginActiveDigitIndex + 1) % 6;
+                }
+                updateLoginInputFieldDisplay();
+            }
+
+            // 2. PUZZLE CONTROL ENGINE (Left/Right picks item, Up/Down selects timeline period slot)
+            if (currentScreenStage === 'view-game') {
+                if (direction === 'left') {
+                    findNextValidChip(-1);
+                } else if (direction === 'right') {
+                    findNextValidChip(1);
+                } else if (direction === 'up') {
+                    selectedSlotIndex = (selectedSlotIndex - 1 + 3) % 3;
+                    updatePuzzleSelectionUI();
+                } else if (direction === 'down') {
+                    selectedSlotIndex = (selectedSlotIndex + 1) % 3;
+                    updatePuzzleSelectionUI();
+                }
+            }
+        }
+
+        // Login Code UI Renderer
+        function updateLoginInputFieldDisplay() {
+            let renderedStr = "";
+            for(let i=0; i<6; i++) {
+                if(i === loginActiveDigitIndex) {
+                    renderedStr += `[${loginNumbersArray[i]}]`;
+                } else {
+                    renderedStr += ` ${loginNumbersArray[i]} `;
+                }
+            }
+            document.getElementById('input-id-field').value = renderedStr.replace(/\s/g, '');
+        }
+
+        // Chip Finder System skips over items already cleared out
+        function findNextValidChip(dir) {
+            if(scoreCounterTracker >= 3) return;
+            let loops = 0;
+            do {
+                selectedChipIndex = (selectedChipIndex + dir + 3) % 3;
+                loops++;
+            } while(document.getElementById(`chip-${selectedChipIndex}`) == null && loops < 4);
+            updatePuzzleSelectionUI();
+        }
+
+        // Refresh Sandbox Active Target Highlights
+        function updatePuzzleSelectionUI() {
+            document.querySelectorAll('.draggable-chip').forEach(c => c.classList.remove('selected-chip'));
+            document.querySelectorAll('.slot-target-box').forEach(s => s.classList.remove('selected-target'));
+
+            let activeChip = document.getElementById(`chip-${selectedChipIndex}`);
+            if(activeChip) activeChip.classList.add('selected-chip');
+
+            let activeSlot = document.getElementById(`slot-${selectedSlotIndex}`);
+            if(activeSlot) activeSlot.classList.add('selected-target');
+        }
+
+        // Action Buttons System Handler Logic
+        function triggerActionA() {
+            RetroAudioSystem.init();
+
+            if (document.getElementById('hint-panel-layer').style.display === 'flex') {
+                toggleHintModal(false);
+                return;
+            }
+
+            if(currentScreenStage === 'view-login') {
+                validateStudentCredentials();
+            } else if(currentScreenStage === 'view-story') {
+                routeToScreen('view-game');
+            } else if(currentScreenStage === 'view-game') {
+                evaluateSlotPlacementMatch();
+            } else if(currentScreenStage === 'view-cards') {
+                adjustCardBookPage(1);
+            } else if(currentScreenStage === 'view-clear') {
+                location.reload();
+            }
+        }
+
+        function triggerActionB() {
+            RetroAudioSystem.init();
+            RetroAudioSystem.blip();
+
+            if (document.getElementById('hint-panel-layer').style.display === 'flex') {
+                toggleHintModal(false);
+                return;
+            }
+
+            if(currentScreenStage === 'view-cards') {
+                adjustCardBookPage(-1);
+            }
+        }
+
+        // Match Validator Function
+        function evaluateSlotPlacementMatch() {
+            let targetSlot = document.getElementById(`slot-${selectedSlotIndex}`);
+            let targetChip = document.getElementById(`chip-${selectedChipIndex}`);
+
+            if(!targetChip || solvedSlots[selectedSlotIndex]) {
+                RetroAudioSystem.deny();
+                return;
+            }
+
+            if(targetSlot.dataset.target === targetChip.dataset.subject) {
+                RetroAudioSystem.confirm();
+                targetSlot.classList.add('correct');
+                solvedSlots[selectedSlotIndex] = true;
+                
+                let fillZone = targetSlot.querySelector('.slot-fill-zone');
+                fillZone.innerText = "✔ " + targetChip.dataset.subject;
+                fillZone.style.color = "#2E8B57";
+                targetSlot.style.background = window.getComputedStyle(targetChip).backgroundColor;
+                
+                targetChip.remove();
+                scoreCounterTracker++;
+
+                let pct = Math.floor((scoreCounterTracker / 3) * 100);
+                document.getElementById('game-sync-label').innerText = `SYNC: ${pct}%`;
+
+                if(scoreCounterTracker >= 3) {
+                    setTimeout(() => routeToScreen('view-cards'), 1200);
+                } else {
+                    findNextValidChip(1);
+                }
+            } else {
+                RetroAudioSystem.deny();
+                let monitor = document.getElementById('app-monitor');
+                monitor.classList.add('screen-shake');
+                setTimeout(() => monitor.classList.remove('screen-shake'), 400);
+            }
+        }
+
+        function routeToScreen(screenId) {
+            currentScreenStage = screenId;
+            document.querySelectorAll('.view-frame').forEach(f => f.classList.remove('active'));
+            document.getElementById(screenId).classList.add('active');
+
+            if(screenId === 'view-game') {
+                updatePuzzleSelectionUI();
+            }
+            if(screenId === 'view-clear') {
+                triggerScreenParticleBurst();
+            }
+        }
+
+        function validateStudentCredentials() {
+            let compiledInput = loginNumbersArray.join("");
+            const feedback = document.getElementById('login-feedback-alert');
+            const monitor = document.getElementById('app-monitor');
+
+            if(compiledInput === "260045") {
+                RetroAudioSystem.confirm();
+                feedback.innerText = "ACCESS GRANTED! 🌸";
+                feedback.style.color = "#2E8B57";
+                setTimeout(() => routeToScreen('view-story'), 1000);
+            } else {
+                RetroAudioSystem.deny();
+                feedback.innerText = "ACCESS DENIED!";
+                feedback.style.color = "#CD5C5C";
+                monitor.classList.add('screen-shake');
+                setTimeout(() => monitor.classList.remove('screen-shake'), 400);
+            }
+        }
+
+        function adjustCardBookPage(dir) {
+            activeBookPageNumber += dir;
+            if(activeBookPageNumber > 4) {
+                routeToScreen('view-clear');
+                return;
+            }
+            if(activeBookPageNumber < 1) {
+                activeBookPageNumber = 1;
+                return;
+            }
+            for(let i = 1; i <= 4; i++) {
+                document.getElementById(`card-p${i}`).style.display = 'none';
+            }
+            document.getElementById(`card-p${activeBookPageNumber}`).style.display = 'flex';
+        }
+
+        function executeBootSequence() {
+            let bar = document.getElementById('boot-fill');
+            let progress = 0;
+            let timer = setInterval(() => {
+                progress += Math.random() * 18;
+                if(progress >= 100) {
+                    progress = 100;
+                    clearInterval(timer);
+                    routeToScreen('view-login');
+                    updateLoginInputFieldDisplay();
+                }
+                bar.style.width = progress + '%';
+            }, 100);
+        }
+
+        window.onload = () => {
+            startSakuraFallingAnimation();
+            executeBootSequence();
+        };
+
+        function triggerScreenParticleBurst() {
+            const canvas = document.getElementById('fx-canvas');
+            const ctx = canvas.getContext('2d');
+            canvas.width = canvas.parentElement.clientWidth;
+            canvas.height = canvas.parentElement.clientHeight;
+
+            let colors = ['#FFB6D9', '#3299FF', '#FFFA75', '#9EFF9E'];
+            let sparks = Array.from({length: 35}, () => ({
+                x: canvas.width / 2, y: canvas.height / 2,
+                vx: (Math.random() - 0.5) * 7, vy: (Math.random() - 0.6) * 7,
+                w: Math.random() * 5 + 3, color: colors[Math.floor(Math.random() * colors.length)]
+            }));
+
+            function loop() {
+                ctx.clearRect(0,0, canvas.width, canvas.height);
+                let checkActive = false;
+                sparks.forEach(s => {
+                    s.x += s.vx; s.y += s.vy; s.vy += 0.15;
+                    if(s.y < canvas.height) checkActive = true;
+                    ctx.fillStyle = s.color;
+                    ctx.fillRect(s.x, s.y, s.w, s.w);
+                });
+                if(checkActive) requestAnimationFrame(loop);
+            }
+            loop();
+        }
+
+        function startSakuraFallingAnimation() {
+            const canvas = document.getElementById('sakura-bg-canvas');
+            const ctx = canvas.getContext('2d');
+            function resize() { canvas.width = window.innerWidth; canvas.height = window.innerHeight; }
+            window.addEventListener('resize', resize); resize();
+
+            let petals = Array.from({ length: 40 }, () => ({
+                x: Math.random() * canvas.width, y: Math.random() * canvas.height - canvas.height,
+                w: Math.random() * 6 + 6, h: Math.random() * 4 + 4,
+                opacity: Math.random() * 0.6 + 0.4, speedY: Math.random() * 1.5 + 1,
+                speedX: Math.random() * 1 - 0.5, rotation: Math.random() * Math.PI
+            }));
+
+            function render() {
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                petals.forEach(p => {
+                    p.y += p.speedY; p.x += p.speedX; p.rotation += 0.01;
+                    if (p.y > canvas.height) { p.y = -20; p.x = Math.random() * canvas.width; }
+                    ctx.save(); ctx.translate(p.x, p.y); ctx.rotate(p.rotation);
+                    ctx.fillStyle = `rgba(255, 182, 193, ${p.opacity})`;
+                    ctx.fillRect(-p.w/2, -p.h/2, p.w, p.h);
+                    ctx.fillStyle = `rgba(255, 148, 194, ${p.opacity})`;
+                    ctx.fillRect(-p.w/4, -p.h/4, p.w/2, p.h/2);
+                    ctx.restore();
+                });
+                requestAnimationFrame(render);
+            }
+            render();
+        }
+    </script>
+</body>
+</html>
